@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy Branch to GitHub Pages
 
 on:
   push:
@@ -12,36 +12,29 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
-
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
-
-      - name: Copy site files to public
+      - name: Build site
         run: |
-          BRANCH_NAME=$(echo "${GITHUB_REF##*/}")
-          mkdir -p public/$BRANCH_NAME
-          cp index.html public/$BRANCH_NAME/
-          if [ -f qigong.html ]; then cp qigong.html public/$BRANCH_NAME/; fi
-          if [ -d images ]; then cp -r images public/$BRANCH_NAME/; fi
+          mkdir -p public
+          cp index.html public/
+          if [ -f qigong.html ]; then cp qigong.html public/; fi
+          if [ -d images ]; then cp -r images public/; fi
 
-      - name: Upload to Pages
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: public
 
       - name: Deploy
-        id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # unique deployment per branch
+          branch: ${{ github.ref_name }}
+          folder: public
